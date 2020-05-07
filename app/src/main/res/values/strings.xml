@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">植被盖度</string>
+    <string name="pic_save">NDVI图片已保存</string>
+    <string name="back">返回</string>
+    <string name="input_usb">NDVI-加密狗已插入</string>
+    <string name="output_usb">NDVI-加密狗已拔出</string>
+</resources>

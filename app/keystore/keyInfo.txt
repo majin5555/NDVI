@@ -1,0 +1,38 @@
+ C:\Users\ZAMAJIN>keytool -list -v -keystore F:\NDVI.jks
+ 输入密钥库口令:
+ 密钥库类型: jks
+ 密钥库提供方: SUN
+
+ 您的密钥库包含 1 个条目
+
+ 别名: key0
+ 创建日期: 2019-6-23
+ 条目类型: PrivateKeyEntry
+ 证书链长度: 1
+ 证书[1]:
+ 所有者: CN=c, OU=c, O=c, L=c, ST=c, C=c
+ 发布者: CN=c, OU=c, O=c, L=c, ST=c, C=c
+ 序列号: 6b6ce1f5
+ 有效期为 Sun Jun 23 10:28:26 CST 2019 至 Thu Jun 16 10:28:26 CST 2044
+ 证书指纹:
+          MD5:  59:1E:33:0F:19:FA:93:14:8B:75:08:10:32:DD:BD:7F
+          SHA1: 75:DC:6A:C6:36:C6:DB:CE:EA:6E:E5:FD:2B:0D:DC:20:54:45:74:EA
+          SHA256: E3:67:F5:CC:EF:5E:17:AA:A3:19:7D:17:F4:C2:EF:82:1A:17:6E:69:10:A0:9F:B7:1A:DA:6C:2A:D5:55:A
+ 签名算法名称: SHA256withRSA
+ 主体公共密钥算法: 2048 位 RSA 密钥
+ 版本: 3
+
+ 扩展:
+
+ #1: ObjectId: 2.5.29.14 Criticality=false
+ SubjectKeyIdentifier [
+ KeyIdentifier [
+ 0000: C8 2A 5B 32 5A 63 7F 16   93 49 9F 3D EF 3D 1B D0  .*[2Zc...I.=.=..
+ 0010: C1 C4 0B 95                                        ....
+ ]
+ ]
+
+
+
+ *******************************************
+ *******************************************

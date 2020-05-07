@@ -1,0 +1,43 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        minSdkVersion 23
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    api fileTree(dir: 'libs', include: ['*.jar'])
+    api 'com.android.support:appcompat-v7:28.0.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    // logger
+    api 'com.orhanobut:logger:2.2.0'
+    //图片处理
+    api 'com.bm.photoview:library:1.4.1'
+    api 'com.github.bumptech.glide:glide:4.9.0'
+    // tencent qmui
+    //api 'com.qmuiteam:qmui:1.2.0'
+    //让app包，与新添加的这个OpenCV库关联
+    api project(':openCVLibrary411')
+    // api 'org.xutils:xutils:3.5.0'
+    /**图片裁剪*/
+    // api 'vn.tinyhands:photo-cropper:0.0.8'
+}
