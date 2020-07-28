@@ -163,6 +163,21 @@
 
 
             <Button
+                android:id="@+id/buttonExcel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/btn_clearclass"
+                android:text="导出Excel"
+                android:textColor="@drawable/btn_text_select_color"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="文件地址:系统根目录NDVI/Excel文件夹"
+                android:textColor="@color/black_14191d"
+                android:textSize="13sp"/>
+            <Button
                 android:id="@+id/button3"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

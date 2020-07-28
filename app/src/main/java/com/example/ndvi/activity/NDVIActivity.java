@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -57,6 +58,10 @@ import baseLibrary.toast.ToastUtil;
 import baseLibrary.util.FileUtil;
 import baseLibrary.util.ImageUtils;
 import baseLibrary.util.NDVIJumpUtil;
+import jxl.Workbook;
+import jxl.write.Label;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
 
 import static com.example.ndvi.util.pictureselector.PictureSelectActivity.mSelectTime;
 
@@ -83,7 +88,7 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
     /** 图片，TXT文档保存地址 */
     private String path;
     /** button 生成NDVI  button2 生成NDVI植被覆盖  button3 导出TXT */
-    private Button button, button2, button3;
+    private Button button, button2, button3, buttonExcel;
     /** 原始图片 宽高 */
     private int mBitmapWidth = 0, mBitmapHeight = 0;
     /** 导出TXT成功标志 */
@@ -118,6 +123,13 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
     public static final String      ACTION_USB_PERMISSION = "com.example.ndvi.activity.USB_PERMISSION";
     /** USB 广播监听 */
     private             USBReceiver mUsbReceiver;
+    private             File        excelFile;
+
+    private String mName;
+    String format = "";
+    private String  mLongitude;//经度
+    private String  mLatitude;//纬度
+    private boolean isShow;
 
     public void registerReceiver() {
         IntentFilter filter = new IntentFilter();
@@ -209,6 +221,8 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
         button2.setOnClickListener(this);
         button3 = getView(R.id.button3);
         button3.setOnClickListener(this);
+        buttonExcel = getView(R.id.buttonExcel);
+        buttonExcel.setOnClickListener(this);
 
         mSwitchCrop = findViewById(R.id.switchCrop);
         mInputRoot = findViewById(R.id.inputroot);
@@ -254,6 +268,10 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
             /**生成TXT文档*/
             case R.id.button3:
                 makeTxtData();
+                break;
+            /**导出数据到Excel*/
+            case R.id.buttonExcel:
+                makeExcel();
                 break;
             default:
                 break;
@@ -461,7 +479,7 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
 
     /** 计算盖度 */
     private void calculatingCoverage(double threshold) {
-        String format = "";
+
         /**所有颜色的数量*/
         double mGreenCount = 0;//绿色像素点的数量
 
@@ -494,9 +512,11 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
         format = df.format(mGreenCount / mNDVI.length);
         Bitmap mBitmap = Bitmap.createBitmap(pixels, mBitmapWidth, mBitmapHeight, Bitmap.Config.RGB_565);
         /**生成水印*/
-        Bitmap bmpWater = ImageUtils.drawTextToRightBottom(NDVIActivity.this, mBitmap, "盖度:" + format + " 经:" + String.format("%.6f", message.getLongitude()) + " 纬:" + String.format("%.6f", message.getLatitude()) + " 时间:" + message.getPicTime(), mBitmap.getWidth() / 40, 10, 10);
+        mLongitude = String.format("%.6f", message.getLongitude());
+        mLatitude = String.format("%.6f", message.getLatitude());
+        Bitmap bmpWater = ImageUtils.drawTextToRightBottom(NDVIActivity.this, mBitmap, "盖度:" + format + " 经:" + mLongitude + " 纬:" + mLatitude + " 时间:" + message.getPicTime(), mBitmap.getWidth() / 40, 10, 10);
         if (bmpWater != null) {
-            String mName;
+
             if (mAuto) {
                 mName = getNDVInameAutoNDVIVegetation();
             } else {
@@ -508,6 +528,7 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
         runOnUiThread(() -> {
             GlideUtil.showImageFile(NDVIActivity.this, mNDVIpathCoverage, imageViewNew2, R.drawable.default_null, mBitmapWidth, mBitmapHeight);
             dismissDialog();
+            isShow = true;
             Logger.d("------------------------------NDVIVEGEVTTION end");
         });
     }
@@ -532,6 +553,99 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
         return "RGBColor" + mSelectTime + ".txt";
     }
 
+    /** Excel 表格 */
+    private String getExcel() {
+        if (mAuto) {
+            return "NDVI_Cov_Auto" + mSelectTime + ".xls";
+        } else {
+            return "NDVI_Cov_Manual" + mSelectTime + ".xls";
+        }
+    }
+
+    /** 到处Excel文档 */
+    private void makeExcel() {
+        if (isShow == true) {
+            showDialog("数据导出中，请稍等...");
+            excelFile = FileUtil.makeFilePath(path + "Excel/", getExcel());
+            createExcel();
+            writeToExcel(mName, message.getPicTime(), mLongitude, mLatitude, format);
+            showDialog("数据导出成功");
+            dismissDialog();
+            isShow = false;
+        } else {
+            showToast("请生成植被覆盖图");
+        }
+    }
+
+    /**
+     * 创建excel表
+     */
+    public void createExcel() {
+
+        WritableSheet ws = null;
+        try {
+            if (excelFile.exists()) {
+                WritableWorkbook wwb = Workbook.createWorkbook(excelFile);
+                ws = wwb.createSheet("sheet1", 0);
+
+                // 在指定单元格插入数据
+                Label lbl0 = new Label(0, 0, "照片名称");
+                Label lbl1 = new Label(1, 0, "拍摄时间");
+                Label lbl2 = new Label(2, 0, "经度");
+                Label lbl3 = new Label(3, 0, "纬度");
+                Label lbl4 = new Label(4, 0, "植被覆盖度");
+
+                ws.addCell(lbl0);
+                ws.addCell(lbl1);
+                ws.addCell(lbl2);
+                ws.addCell(lbl3);
+                ws.addCell(lbl4);
+
+                // 从内存中写入文件中
+                wwb.write();
+                wwb.close();
+            } else {
+                Log.d("WritableSheet", "WritableSheet  2");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showToast("导出数据出错");
+            dismissDialog();
+        }
+    }
+
+    //将数据存入到Excel表中
+    public void writeToExcel(Object... args) {
+
+        try {
+            Workbook oldWwb = Workbook.getWorkbook(excelFile);
+            WritableWorkbook wwb = Workbook.createWorkbook(excelFile, oldWwb);
+            WritableSheet ws = wwb.getSheet(0);
+            // 当前行数
+            int row = ws.getRows();
+            Label lab1 = new Label(0, row, args[0] + "");
+            Label lab2 = new Label(1, row, args[1] + "");
+            Label lab3 = new Label(2, row, args[2] + "");
+            Label lab4 = new Label(3, row, args[3] + "");
+            Label lab5 = new Label(4, row, args[4] + "");
+            ws.addCell(lab1);
+            ws.addCell(lab2);
+            ws.addCell(lab3);
+            ws.addCell(lab4);
+            ws.addCell(lab5);
+            // 从内存中写入文件中,只能刷一次.
+            wwb.write();
+            wwb.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showToast("导出数据出错");
+            dismissDialog();
+        }
+
+    }
+
     /** 到处txt文档 */
     private void makeTxtData() {
         if (mNDVI != null) {
@@ -545,8 +659,6 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
                     threadWriteToTxt = new Thread(() -> {
                         writeTxt = false;
                         FileUtil.makeFilePath(path + "TXT/", getRGBTXT());
-                        Logger.d("写入txt start   ");
-
                         try {
                             //创建一个字符缓冲输出流对象
                             mBwTxt = new BufferedWriter(new FileWriter(path + "TXT/" + getRGBTXT()));
@@ -640,7 +752,7 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
         //安卓系统环境版本在29以上时：
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "DCIM/Pictures");
-        }else {
+        } else {
             contentValues.put(MediaStore.Images.Media.DATA, dirPath);
         }
         contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/JPEG");
@@ -655,9 +767,6 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
         runOnUiThread(() -> ToastUtil.showToast(NDVIActivity.this, R.string.pic_save));
         return;
     }
-
-
-
 
 
     /**
@@ -676,7 +785,7 @@ public class NDVIActivity extends BaseActivity implements View.OnClickListener, 
                 GlideUtil.showImageFile(NDVIActivity.this, message.getShowPath(), imageViewOld, R.drawable.ico_add, mBasebitmap.getWidth(), mBasebitmap.getHeight());
 
             } else {
-                Logger.d("message.getBasePath()  "+message.getBasePath());
+                Logger.d("message.getBasePath()  " + message.getBasePath());
                 Bitmap mBitmap = BitmapFactory.decodeFile(message.getBasePath());
                 if (mBitmap.getWidth() > AppSet.WIDTH) {
                     int h0 = mBitmap.getHeight() * 1024 / mBitmap.getWidth();
